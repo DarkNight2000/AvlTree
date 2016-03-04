@@ -1,15 +1,17 @@
 #include<stdio.h>
 #include<stdlib.h>
 
+/* Author Mike Zhang(zhang.4660) */
 
 /* build up AVL tree */
 struct Node {
 
         long long key;
         long long height;
+        long long sum;
+        
         struct Node *left;
         struct Node *right;
-
 };
  
  
@@ -28,16 +30,16 @@ long long max(long long a, long long b){
 }
  
 /* allocates memeory for a new node */
-struct Node* createNode(long long key){
+struct Node* createNode(long long data){
 
         struct Node* node = (struct Node*) malloc(sizeof(struct Node));
         
-        node->key = key;
+        node->key = data;
         node->left = NULL;
         node->right = NULL;
         node->height = 1;  
         
-        return (node);
+        return node;
 }
  
 /* right rotate 2 nodes */
@@ -81,18 +83,21 @@ long long getBalance(struct Node *N){
 }
 
 /* insert node into the binary search tree */
-struct Node* insert(struct Node *node, long long key){
+struct Node* insert(struct Node *node, long long data){
         
         /* insert the node into the binary search tree */
         if (node == NULL){
-        	return(createNode(key));
+        	return(createNode(data));
  	}
-	if (key < (node->key)){
-        	node->left = insert(node->left, key);
+	if (data < (node->key)){
+        	node->left = insert(node->left, data);
+
     	}else{
-        	node->right = insert(node->right, key);
+        	node->right = insert(node->right, data);
+
  	}
  
+
     	/* update height of node */
 	node->height = max(height(node->left), height(node->right)) + 1;
 	 
@@ -102,22 +107,22 @@ struct Node* insert(struct Node *node, long long key){
 	/* there are 4 cases for unbalanced node */
 	 
 	/* case 1:Left Left */
-	if (balance > 1 && key < node->left->key)
+	if (balance > 1 && data < node->left->key)
 		return rightRotate(node);
 	 
 	/* case 2:Right Right */
-        if (balance < -1 && key > node->right->key)
+        if (balance < -1 && data > node->right->key)
 		return leftRotate(node);
 	 
 	/* case 3: Left Right */
-	if (balance > 1 && key > node->left->key){
+	if (balance > 1 && data > node->left->key){
 	
 		node->left =  leftRotate(node->left);
 		return rightRotate(node);
 	}
  
 	/* case 4: Right Left */
-    	if (balance < -1 && key < node->right->key){
+    	if (balance < -1 && data < node->right->key){
     	
         	node->right = rightRotate(node->right);
         	return leftRotate(node);
@@ -159,56 +164,61 @@ void postOrder(struct Node *root){
     	}
 }
 
-/* compute the sum value of root node, its left child and its right child */
-long long countValue(struct Node *n){
+long long sumTree(struct Node *node){
+
+	if(node != NULL) {
+	
+	/* store the root value */
+		node->sum = node->key + sumTree(node->left) + sumTree(node->right);
+	}else{
+		return 0;
+		
+	}
+	return node->sum;
+
+}
+
+/* compute the sum value of node that is less than or equal to k */
+long long countLessThan(struct Node *n, long long min){
 	long long result = 0;
 	if(n != NULL){
-		result = result + n->key;
-		
-		/* left child is not empty */
-		if(n->left != NULL){
-			result = result + countValue(n->left);
-		}
-		/* right child is not empty */
-		if(n->right != NULL){
-			result = result + countValue(n->right);
+		if(n->key < min){
+			result = result + n->key;
+			if(n->left != NULL){
+				result = result + n->left->sum;
+			}
+			if(n->right != NULL){
+				result = result + countLessThan(n->right, min);
+			}
+		}else{
+			if(n->left != NULL){
+				result = result + countLessThan(n->left, min);
+			}
 		}
 	}
-	
+
 	return result;
 }
 
 /* compute the sum value of node that is less than or equal to k */
-long long countLessThan(struct Node *n, long long k){
+long long countGreaterThan(struct Node *n, long long max){
 	long long result = 0;
-	while(n != NULL){
-		if(n->key <= k){
+	if(n != NULL){
+		if(n->key > max){
 			result = result + n->key;
-			if(n->left != NULL){
-				result = result + countValue(n->left);
+			if(n->right != NULL){
+				result = result + n->right->sum;
 			}
-			n = n->right;
+			if(n->left != NULL){
+				result = result + countGreaterThan(n->left, max);
+			}
 		}else{
-			n = n->left;
+			if(n->right != NULL){
+				result = result + countGreaterThan(n->right, max);
+			}
 		}
 	}
-	return result;
-}
 
-/* compute the sum value of node that is less than or equal to k */
-long long countGreaterThan(struct Node *n, long long k){
-	long long result = 0;
-	while(n != NULL){
-		if(n->key >= k){
-			result = result + n->key;
-			if(n->left != NULL){
-				result = result + countValue(n->right);
-			}
-			n = n->left;
-		}else{
-			n = n->right;
-		}
-	}
 	return result;
 }
 
@@ -217,7 +227,7 @@ long long rangeCompute(struct Node *n, long long min, long long max){
     long long result = 0;
 
     if(n != NULL){
-        result = countLessThan(n, max) - countLessThan(n, min);
+        result = n->sum - (countGreaterThan(n, max) + countLessThan(n, min));
     }    
     return result;
 }
@@ -249,19 +259,25 @@ int main(int argc, char**argv){
 	fclose(data);
 	
 	/* print out the binary search tree in 3 different orders :*/
-	/*printf("Preorder traversal of the AVL tree is \n");
+	printf("Preorder traversal of the AVL tree is \n");
 	preOrder(root);
 	
-	printf("\nInorder traversal of the AVL tree is \n");
+	printf("\n\nInorder traversal of the AVL tree is \n");
 	inOrder(root);
 	
-	printf("\nPostorder traversal of the AVL tree is \n");
-	postOrder(root);
-	*/
+	printf("\n\nPostorder traversal of the AVL tree is \n");
+	postOrder(root);*/
 	
+	/* assign value to the sum in the tree */
+	sumTree(root);
+	
+	
+	/*printf("\nThe sum of root %Ld\n", root->sum);
+	printf("\nThe sum of root left child %Ld\n", root->left->sum);
+	printf("\nThe sum of root right child %Ld\n", root->right->sum);*/
+	/* read the range min and max value from the file rangeX */
 	
 	printf("\n");
-	/* read the range min and max value from the file rangeX */
 	
 	FILE *range = fopen(argv[2], "r");
 	if (range == NULL) {
