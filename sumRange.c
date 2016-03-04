@@ -266,7 +266,7 @@ int main(int argc, char**argv){
 	inOrder(root);
 	
 	printf("\n\nPostorder traversal of the AVL tree is \n");
-	postOrder(root);*/
+	postOrder(root);
 	
 	/* assign value to the sum in the tree */
 	sumTree(root);
