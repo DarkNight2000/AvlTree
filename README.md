@@ -7,5 +7,9 @@ As the integers are read from file dataX, insert them in a binary search tree. A
 
 
 Range [-3,4]. Sum = 6.
+
+
 Range [0,5]. Sum = 13.
+
+
 The program runs in O(h) time where h is the height of the tree.The expected height of the tree is O(log2(n)).)
